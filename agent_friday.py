@@ -42,7 +42,7 @@ STT_PROVIDER = os.getenv("STT_PROVIDER", "sarvam")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "openai")
 
-GEMINI_LLM_MODEL = os.getenv("GEMINI_LLM_MODEL", "gemini-2.5-flash")
+GEMINI_LLM_MODEL = os.getenv("GEMINI_LLM_MODEL", "gemini-3.8-flash")
 OPENAI_LLM_MODEL = os.getenv("OPENAI_LLM_MODEL", "gpt-4o")
 
 OPENAI_TTS_MODEL = os.getenv("OPENAI_TTS_MODEL", "tts-1")

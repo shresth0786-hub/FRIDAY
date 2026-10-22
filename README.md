@@ -15,7 +15,7 @@ Two processes cooperate:
 
 ## Features
 
-- **Natural voice conversation** — Sarvam Saaras v3 STT, Gemini 2.5 Flash reasoning, OpenAI `nova` TTS (all swappable via env vars)
+- **Natural voice conversation** — Sarvam Saaras v3 STT, Gemini 3.8 Flash reasoning, OpenAI `nova` TTS (all swappable via env vars)
 - **World news brief** — pulls four RSS feeds (BBC, CNBC, NYTimes, AlJazeera) in parallel, delivers a short spoken summary, then opens a visual world monitor
 - **Real web search** — DuckDuckGo search (no API key) plus page fetching with HTML→text extraction, so answers reflect what's happening *now*
 - **Weather** — current conditions for any city via Open-Meteo (no API key)
@@ -35,7 +35,7 @@ Two processes cooperate:
   STT (Sarvam Saaras v3)
       │
       ▼
-  LLM (Gemini 2.5 Flash) ─────► MCP Server (FastMCP / SSE, :8000)
+  LLM (Gemini 3.8 Flash) ─────► MCP Server (FastMCP / SSE, :8000)
       │                            ├─ get_world_news ──► open_world_monitor
       │                            ├─ search_web / fetch_url
       │                            ├─ get_weather
@@ -192,7 +192,7 @@ The MCP server will pick it up on next start.
 - **[FastMCP](https://github.com/jlowin/fastmcp)** — MCP server framework
 - **[LiveKit Agents](https://github.com/livekit/agents)** — real-time voice pipeline
 - **Sarvam Saaras v3** — STT (Indian-English optimised)
-- **Google Gemini 2.5 Flash** — LLM
+- **Google Gemini 3.8 Flash** — LLM
 - **OpenAI TTS** (`nova` voice) — TTS
 - **Silero VAD** — voice activity detection
 - **DuckDuckGo (HTML endpoint)** — keyless web search
