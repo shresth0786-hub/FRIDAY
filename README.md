@@ -1,44 +1,52 @@
-# F.R.I.D.A.Y. — Tony Stark Demo
+# F.R.I.D.A.Y.
 
 > *"Fully Responsive Intelligent Digital Assistant for You"*
 
-A Tony Stark-inspired AI assistant split into two cooperating pieces:
+A local, voice-first AI assistant with an Iron Man attitude. Talk into your microphone and F.R.I.D.A.Y. listens, reasons, runs real tools on your machine, and answers out loud — news briefs, web searches, weather, timers, support tickets — in a single conversational turn.
+
+Two processes cooperate:
 
 | Component | What it is |
 |-----------|-----------|
-| **MCP Server** (`uv run friday`) | A [FastMCP](https://github.com/jlowin/fastmcp) server that exposes tools (news, web search, system info, …) over SSE. Think of it as the Stark Industries backend — it does the actual work. |
-| **Voice Agent** (`uv run friday_voice`) | A [LiveKit Agents](https://github.com/livekit/agents) voice pipeline that listens to your microphone, reasons with an LLM (Gemini 2.5 Flash by default), and speaks back with OpenAI TTS — all while pulling tools from the MCP server in real time. |
-
-Original demo by the upstream author: [Instagram reel](https://www.instagram.com/p/DW2HjYtkwg_/) · [Video guide](https://www.youtube.com/watch?v=mMY9swqe3BI)
+| **MCP Server** (`uv run friday`) | A [FastMCP](https://github.com/jlowin/fastmcp) tool server over SSE — the hands of the assistant. It fetches news, searches the web, checks weather, sets timers, and files tickets. |
+| **Voice Agent** (`uv run friday_voice`) | A [LiveKit Agents](https://github.com/livekit/agents) voice pipeline — mic → speech-to-text → LLM → text-to-speech → speaker, pulling tools from the MCP server in real time. |
 
 ---
 
-## Credits
+## Features
 
-This project is a modified fork of [SAGAR-TAMANG/friday-tony-stark-demo](https://github.com/SAGAR-TAMANG/friday-tony-stark-demo) by **Sagar Tamang**, used under the MIT license. The core architecture (LiveKit voice agent + FastMCP tool server) is his work.
-
-Changes in this fork: rewritten F.R.I.D.A.Y. system prompt with startup config validation, real DuckDuckGo web search, `get_weather`, `set_timer`/`cancel_timers`, Supabase ticketing tools (`create_ticket`/`list_tickets`), configurable MCP server URL, packaging fixes, and lint/README cleanup.
+- **Natural voice conversation** — Sarvam Saaras v3 STT, Gemini 2.5 Flash reasoning, OpenAI `nova` TTS (all swappable via env vars)
+- **World news brief** — pulls four RSS feeds (BBC, CNBC, NYTimes, AlJazeera) in parallel, delivers a short spoken summary, then opens a visual world monitor
+- **Real web search** — DuckDuckGo search (no API key) plus page fetching with HTML→text extraction, so answers reflect what's happening *now*
+- **Weather** — current conditions for any city via Open-Meteo (no API key)
+- **Timers** — "set a timer for ten minutes" → countdown in the background → beep on your machine when done
+- **Ticketing** — report an issue by voice; it's logged to Supabase with a reference number
+- **Fail-fast startup** — validates required API keys and MCP server reachability before joining the room, with clear error messages
+- **Clean voice UX** — single-source greeting, short spoken responses, no technical tool names ever spoken
 
 ---
 
 ## How it works
 
 ```
-Microphone ──► STT (Sarvam Saaras v3)
-                    │
-                    ▼
-             LLM (Gemini 2.5 Flash)  ◄──────► MCP Server (FastMCP / SSE)
-                    │                              ├─ get_world_news
-                    ▼                              ├─ open_world_monitor
-             TTS (OpenAI nova)                     ├─ search_web (DuckDuckGo)
-                    │                              ├─ fetch_url
-                    ▼                              ├─ get_weather (Open-Meteo)
-             Speaker / LiveKit room                ├─ set_timer / cancel_timers
-                                                  ├─ create_ticket / list_tickets (Supabase)
-                                                  └─ get_current_time, get_system_info, …
+   you speak
+      │
+      ▼
+  STT (Sarvam Saaras v3)
+      │
+      ▼
+  LLM (Gemini 2.5 Flash) ─────► MCP Server (FastMCP / SSE, :8000)
+      │                            ├─ get_world_news ──► open_world_monitor
+      │                            ├─ search_web / fetch_url
+      │                            ├─ get_weather
+      ▼                            ├─ set_timer / cancel_timers
+  TTS (OpenAI nova)                ├─ create_ticket / list_tickets
+      │                            └─ get_current_time, get_system_info, …
+      ▼
+  speaker / LiveKit room
 ```
 
-The voice agent connects to the MCP server via SSE at `http://127.0.0.1:8000/sse` by default — override with the `MCP_SERVER_URL` env var (e.g. a Cloudflare tunnel when the server runs elsewhere).
+The agent connects to the MCP server at `http://127.0.0.1:8000/sse` by default — override with the `MCP_SERVER_URL` env var (e.g. a Cloudflare tunnel when the server runs elsewhere).
 
 ---
 
@@ -113,10 +121,10 @@ Starts the LiveKit voice agent in **dev mode** — it joins a LiveKit room and b
 
 | Command | Entry point | What it does |
 |---------|------------|--------------|
-| `uv run friday` | `server.py → main()` | Launches the **FastMCP server** over SSE transport on port 8000. This is the "brain backend" — it registers all tools, prompts, and resources that the LLM can call. |
-| `uv run friday_voice` | `agent_friday.py → dev()` | Launches the **LiveKit voice agent**. It builds the STT / LLM / TTS pipeline, connects to your LiveKit room, and wires up the MCP server as a tool source. The `dev()` wrapper auto-injects the `dev` CLI flag so you don't have to type it manually. |
+| `uv run friday` | `server.py → main()` | Launches the **FastMCP server** over SSE on port 8000. Registers all tools, prompts, and resources the LLM can call. |
+| `uv run friday_voice` | `agent_friday.py → dev()` | Launches the **LiveKit voice agent**. Builds the STT / LLM / TTS pipeline, joins your LiveKit room, and wires up the MCP server as a tool source. The `dev()` wrapper auto-injects the `dev` CLI flag. |
 
-> Both processes must run **simultaneously**. The voice agent calls the MCP server in real time whenever it needs a tool (e.g. fetching news).
+> Both processes must run **simultaneously**. The voice agent calls the MCP server in real time whenever it needs a tool.
 
 ---
 
@@ -129,15 +137,17 @@ Copy `.env.example` → `.env` and fill in the values below.
 | `LIVEKIT_URL` | ✅ | [LiveKit Cloud dashboard](https://cloud.livekit.io) → your project URL |
 | `LIVEKIT_API_KEY` | ✅ | LiveKit Cloud → API Keys |
 | `LIVEKIT_API_SECRET` | ✅ | LiveKit Cloud → API Keys |
-| `GROQ_API_KEY` | optional | [console.groq.com](https://console.groq.com) — only needed if you switch `LLM_PROVIDER` to `"groq"` |
 | `SARVAM_API_KEY` | ✅ (default STT) | [dashboard.sarvam.ai](https://dashboard.sarvam.ai) |
 | `OPENAI_API_KEY` | ✅ (default TTS) | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| `GOOGLE_API_KEY` | ✅ (default LLM) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| `GROQ_API_KEY` | optional | [console.groq.com](https://console.groq.com) — for Groq LLM models |
 | `DEEPGRAM_API_KEY` | optional | [console.deepgram.com](https://console.deepgram.com) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | optional | GCP service-account JSON *path* — only for `STT_PROVIDER = "google"` |
-| `GOOGLE_API_KEY` | ✅ (default LLM) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | `SUPABASE_URL` | optional | [supabase.com](https://supabase.com) — for the ticketing tools |
 | `SUPABASE_API_KEY` | optional | Supabase project → API settings |
 | `MCP_SERVER_URL` | optional | Override the MCP server URL (default `http://127.0.0.1:8000/sse`) |
+
+The agent checks at startup that the keys for your chosen pipeline exist and exits with a clear message if any are missing.
 
 ### Supabase ticketing setup (optional)
 
@@ -165,8 +175,6 @@ LLM_PROVIDER=gemini   # gemini | openai
 TTS_PROVIDER=openai   # openai | sarvam
 ```
 
-The agent validates that the required API keys for your chosen pipeline are present at startup and fails fast with a clear message if any are missing.
-
 ---
 
 ## Adding a new tool
@@ -186,10 +194,39 @@ The MCP server will pick it up on next start.
 - **Sarvam Saaras v3** — STT (Indian-English optimised)
 - **Google Gemini 2.5 Flash** — LLM
 - **OpenAI TTS** (`nova` voice) — TTS
+- **Silero VAD** — voice activity detection
+- **DuckDuckGo (HTML endpoint)** — keyless web search
+- **Open-Meteo** — keyless weather data
+- **Supabase REST** — ticket storage
 - **[uv](https://github.com/astral-sh/uv)** — fast Python package manager
 
 ---
 
+## Roadmap
+
+- [ ] Own demo video / screenshots of this fork in action
+- [ ] Wake-word or push-to-talk activation
+- [ ] Conversation memory across a session
+- [ ] Ticket status updates (`update_ticket`, `close_ticket`)
+- [ ] Optional ElevenLabs TTS voice
+- [ ] System controls (volume, brightness, app launching) as MCP tools
+
+---
+
+## Credits & attribution
+
+This project is a modified fork of [SAGAR-TAMANG/friday-tony-stark-demo](https://github.com/SAGAR-TAMANG/friday-tony-stark-demo) by **Sagar Tamang**, used under the MIT license. The core architecture (LiveKit voice agent + FastMCP tool server) is his work — thank you for open-sourcing it.
+
+**What this fork changed:**
+
+- Rewritten F.R.I.D.A.Y. system prompt (single-source greeting, no spoken tool names, short spoken answers)
+- Fail-fast startup: API-key validation + MCP server reachability check
+- Real DuckDuckGo `search_web` (was a stub) and HTML→text `fetch_url`
+- New tools: `get_weather`, `set_timer` / `cancel_timers`, `create_ticket` / `list_tickets`
+- Providers, models, and MCP URL configurable via env vars (no code edits)
+- Packaging fixes (hatch wheel includes the `friday` package), dead code removed
+- Ruff lint config, updated docs, `.env.example`
+
 ## License
 
-MIT
+[MIT](LICENSE) — see [LICENSE](LICENSE) for copyright notices covering the original work and this fork.
