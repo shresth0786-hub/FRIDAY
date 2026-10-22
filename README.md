@@ -9,9 +9,15 @@ A Tony Stark-inspired AI assistant split into two cooperating pieces:
 | **MCP Server** (`uv run friday`) | A [FastMCP](https://github.com/jlowin/fastmcp) server that exposes tools (news, web search, system info, …) over SSE. Think of it as the Stark Industries backend — it does the actual work. |
 | **Voice Agent** (`uv run friday_voice`) | A [LiveKit Agents](https://github.com/livekit/agents) voice pipeline that listens to your microphone, reasons with an LLM (Gemini 2.5 Flash by default), and speaks back with OpenAI TTS — all while pulling tools from the MCP server in real time. |
 
-Demo: [Instagram reel](https://www.instagram.com/p/DW2HjYtkwg_/)
+Original demo by the upstream author: [Instagram reel](https://www.instagram.com/p/DW2HjYtkwg_/) · [Video guide](https://www.youtube.com/watch?v=mMY9swqe3BI)
 
-[![Demo Video Guide](https://img.youtube.com/vi/mMY9swqe3BI/maxresdefault.jpg)](https://www.youtube.com/watch?v=mMY9swqe3BI)
+---
+
+## Credits
+
+This project is a modified fork of [SAGAR-TAMANG/friday-tony-stark-demo](https://github.com/SAGAR-TAMANG/friday-tony-stark-demo) by **Sagar Tamang**, used under the MIT license. The core architecture (LiveKit voice agent + FastMCP tool server) is his work.
+
+Changes in this fork: rewritten F.R.I.D.A.Y. system prompt with startup config validation, real DuckDuckGo web search, `get_weather`, `set_timer`/`cancel_timers`, Supabase ticketing tools (`create_ticket`/`list_tickets`), configurable MCP server URL, packaging fixes, and lint/README cleanup.
 
 ---
 
@@ -71,8 +77,8 @@ FRIDAY/
 ### 2. Clone & install
 
 ```bash
-git clone https://github.com/SAGAR-TAMANG/friday-tony-stark-demo.git
-cd friday-tony-stark-demo
+git clone https://github.com/shresth0786-hub/FRIDAY.git
+cd FRIDAY
 uv sync          # creates .venv and installs all dependencies
 ```
 
